@@ -1,6 +1,21 @@
 # STATIFY_2.0_Stellar-Stack
 
 ## GenAI Financial Analyst Chatbot
+🚧 Project Status: Under Development
+
+This repository contains our submission for the STATIFY 2.0 – Week 1: Financial Analyst Chatbot project.
+
+The project is currently under active development by our team. We are implementing an AI-powered financial assistant capable of providing real-time stock prices and the latest market news using a Hugging Face LLM, LangChain, and external tools.
+
+The complete source code, documentation, setup instructions, and all required project files will be uploaded to this repository upon completion.
+
+Expected Deployment: **Before 6:00 PM (IST), Sunday**.
+
+Thank you for your patience.
+
+
+
+
 
 An LLM-powered financial assistant designed to retrieve real-time stock prices and aggregate recent market news to provide comprehensive, live market insights. This project utilizes open-source models from Hugging Face alongside tool calling/agentic reasoning to dynamically fetch financial data and browse the web.
 
