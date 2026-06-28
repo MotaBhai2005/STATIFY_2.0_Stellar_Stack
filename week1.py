@@ -12,7 +12,7 @@ model_with_tools = model.bind_tools([
     get_stock_price,
     get_company_news
 ])
-SYSTEM_PROMPT="""You are Statify AI, an intelligent Financial Analyst chatbot.
+SYSTEM_PROMPT="""You are FinSight AI, an intelligent Financial Analyst chatbot.
 
 Your primary responsibility is to help users with financial and stock market-related queries by providing accurate, concise, and informative responses.
 
