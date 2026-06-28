@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, List
 
 class StockPriceInput(BaseModel):
     ticker_symbol: str = Field(
@@ -17,3 +17,19 @@ class StockPriceOutput(BaseModel):
     financial_currency: Optional[str] = Field(None, description="The currency in which financial statements are reported")
     currency: Optional[str] = Field(None, description="The trading currency of the stock")
     error: Optional[str] = Field(None, description="Error message if the ticker is not found or invalid")
+
+
+class NewsInput(BaseModel):
+    company: str = Field(description="Company name to search news for")
+
+
+class NewsArticle(BaseModel):
+    title: str = Field(description="Title of the news article")
+    summary: str = Field(description="Brief summary of the article")
+    link: str = Field(description="URL of the article")
+
+
+class NewsResponse(BaseModel):
+    company: str = Field(description="Company name")
+    articles: List[NewsArticle] = Field(description="List of latest news articles")
+
