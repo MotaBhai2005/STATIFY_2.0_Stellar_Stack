@@ -1,0 +1,21 @@
+#Langchain core
+langchain
+langchain-core
+langchain-community
+
+#Hugging face Integration
+langchain-huggingface
+transformers
+huggingface-hub
+
+#Environment variable management
+python-dotenv
+
+
+
+yfinance
+duckduckgo-search
+pydantic
+torch
+
+requests
