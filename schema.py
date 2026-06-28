@@ -13,7 +13,7 @@ class StockPriceOutput(BaseModel):
     current_price: Optional[float] = Field(None, description="The current trading price of the stock")
     day_high: Optional[float] = Field(None, description="The highest price of the stock during the current trading day")
     day_low: Optional[float] = Field(None, description="The lowest price of the stock during the current trading day")
-    market_Cap: Optional[int] = Field(None, description="The market capitalization of the company")
+    market_cap: Optional[int] = Field(None, description="The market capitalization of the company")
     financial_currency: Optional[str] = Field(None, description="The currency in which financial statements are reported")
     currency: Optional[str] = Field(None, description="The trading currency of the stock")
     error: Optional[str] = Field(None, description="Error message if the ticker is not found or invalid")
@@ -31,5 +31,5 @@ class NewsArticle(BaseModel):
 
 class NewsResponse(BaseModel):
     company: str = Field(description="Company name")
-    articles: List[NewsArticle] = Field(description="List of latest news articles")
+    articles: List[NewsArticle] = Field(description="List of latest news articles related to company")
 

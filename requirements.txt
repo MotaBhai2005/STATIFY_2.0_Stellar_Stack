@@ -14,8 +14,8 @@ python-dotenv
 
 
 yfinance
-duckduckgo-search
+ddgs
 pydantic
 torch
-
 requests
+
