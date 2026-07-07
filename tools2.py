@@ -2,7 +2,13 @@ import yfinance as yf
 from langchain_core.tools import tool
 from schema import StockPriceInput, StockPriceOutput, NewsInput
 from ddgs import DDGS
+from pathlib import Path
+from langchain_community.document_loaders import PyPDFLoader
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_chroma import Chroma
 
+#Get stock price
 @tool("get_stock_price", args_schema=StockPriceInput)
 def get_stock_price(ticker_symbol: str) -> dict:
     """
@@ -50,8 +56,47 @@ def get_stock_price(ticker_symbol: str) -> dict:
            error=f"Failed to fetch stock data: {str(e)}"
         ).model_dump()
 
+#Technical Indicator
+@tool("get_technical_indicators")
+def get_technical_indicators(ticker_symbol: str) -> dict:
+    """
+    Calculate technical indicators (RSI, SMA, EMA) for a given ticker.
+    """
+    try:
+        ticker = yf.Ticker(ticker_symbol)
+        hist = ticker.history(period="6mo")
+        
+        if hist.empty:
+            return {"error": "No historical data found"}
+        
+        close = hist['Close']
+        
+        # SMA - you already know how to do this
+        sma_20 = close.rolling(window=20).mean()
+        sma_50 = close.rolling(window=50).mean()
+        
+        # EMA - similar to SMA but use .ewm()
+        ema_20 = close.ewm(span=20, adjust=False).mean()
+        
+        # RSI - follow the 8-step logic from earlier
+        delta = close.diff()
+        gain = delta.clip(lower=0)
+        loss = -delta.clip(upper=0)
+        avg_gain = gain.rolling(window=14).mean()
+        avg_loss = loss.rolling(window=14).mean()
+        rs = avg_gain/avg_loss
+        rsi = 100.0 - (100.0 / (1.0 + rs))
+        
+        return {
+            "sma_20": round(float(sma_20.iloc[-1]), 2),
+            "sma_50": round(float(sma_50.iloc[-1]), 2),
+            "ema_20": round(float(ema_20.iloc[-1]), 2),
+            "rsi_14": round(float(rsi.iloc[-1]), 2),
+        }
+    except Exception as e:
+        return {"error": f"Failed to calculate indicators: {str(e)}"}
 
-
+#News
 @tool("get_company_news",args_schema=NewsInput)
 def get_company_news(company: str) -> str:
     """
@@ -91,41 +136,93 @@ def get_company_news(company: str) -> str:
     except Exception as e:
         return f"Error fetching news: {str(e)}"
 
-@tool("get_technical_indicators")
-def get_technical_indicators(ticker_symbol: str) -> dict:
-    """
-    Calculate technical indicators (RSI, SMA, EMA) for a given ticker.
-    """
+# RAG
+retriever = None
+vector_db = None
+embedding_model = None
+
+BASE_DIR = Path(__file__).resolve().parent
+CHROMA_DIR = BASE_DIR / "chroma_db"
+
+def load_pdf(pdf_path: str | Path):
+    loader = PyPDFLoader(str(pdf_path))
+    return loader.load()
+
+def split_documents(documents: list):
+    splitter = RecursiveCharacterTextSplitter(
+        chunk_size=500,
+        chunk_overlap=50
+    )
+
+    return splitter.split_documents(documents)
+
+def create_embedding_model():
+
+    return HuggingFaceEmbeddings(
+        model_name="sentence-transformers/all-MiniLM-L6-v2"
+    )
+
+def create_vector_database(chunks, embedding_model):
+
+    return Chroma.from_documents(
+        documents=chunks,
+        embedding=embedding_model,
+        persist_directory=str(CHROMA_DIR)
+    )
+
+def initialize_rag(pdf_path, k=3):
+
+    global retriever
+    global vector_db
+    global embedding_model
+
+    if retriever is not None:
+        return
+    
     try:
-        ticker = yf.Ticker(ticker_symbol)
-        hist = ticker.history(period="6mo")
-        
-        if hist.empty:
-            return {"error": "No historical data found"}
-        
-        close = hist['Close']
-        
-        # SMA - you already know how to do this
-        sma_20 = close.rolling(window=20).mean()
-        sma_50 = close.rolling(window=50).mean()
-        
-        # EMA - similar to SMA but use .ewm()
-        ema_20 = close.ewm(span=20, adjust=False).mean()
-        
-        # RSI - follow the 8-step logic from earlier
-        delta = close.diff()
-        gain = delta.clip(lower=0)
-        loss = -delta.clip(upper=0)
-        avg_gain = gain.rolling(window=14).mean()
-        avg_loss = loss.rolling(window=14).mean()
-        rs = avg_gain/avg_loss
-        rsi = 100.0 - (100.0 / (1.0 + rs))
-        
-        return {
-            "sma_20": round(float(sma_20.iloc[-1]), 2),
-            "sma_50": round(float(sma_50.iloc[-1]), 2),
-            "ema_20": round(float(ema_20.iloc[-1]), 2),
-            "rsi_14": round(float(rsi.iloc[-1]), 2),
-        }
+        documents = load_pdf(pdf_path)
     except Exception as e:
-        return {"error": f"Failed to calculate indicators: {str(e)}"}
+       raise RuntimeError(
+        f"Failed to initialize RAG: {e}"
+    )
+
+    chunks = split_documents(documents)
+
+    embedding_model = create_embedding_model()
+
+    vector_db = create_vector_database(
+        chunks,
+        embedding_model
+    )
+
+    retriever = vector_db.as_retriever(
+    search_kwargs={"k": k}
+    )
+
+    print("RAG initialized successfully.")
+
+def retrieve_context(query):
+
+    if retriever is None:
+        raise RuntimeError(
+            "RAG has not been initialized."
+        )
+
+    docs = retriever.invoke(query)
+
+    return "\n\n".join(
+        doc.page_content
+        for doc in docs
+    )
+
+if __name__ == "__main__":
+
+    PDF_PATH = (
+        BASE_DIR
+        / "data"
+        / "Module 2_Technical Analysis.pdf"
+    )
+
+    initialize_rag(PDF_PATH)
+
+    print(retrieve_context("RSI above 70"))
