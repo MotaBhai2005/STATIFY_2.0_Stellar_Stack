@@ -1,176 +1,96 @@
-from langchain.tools import tool
-from ddgs import DDGS
+from pathlib import Path
 
-from schema2 import NewsInput
+from langchain_community.document_loaders import PyPDFLoader
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_chroma import Chroma
 
+retriever = None
+vector_db = None
+embedding_model = None
 
-POSITIVE_WORDS = [
-    "profit",
-    "growth",
-    "record",
-    "approval",
-    "surge",
-    "contract",
-    "launch",
-    "beat",
-    "investment",
-    "expansion",
-    "partnership",
-    "acquisition",
-    "upgrade",
-]
+BASE_DIR = Path(__file__).resolve().parent
+CHROMA_DIR = BASE_DIR / "chroma_db"
 
-NEGATIVE_WORDS = [
-    "loss",
-    "decline",
-    "fall",
-    "fraud",
-    "lawsuit",
-    "recall",
-    "delay",
-    "bankruptcy",
-    "downgrade",
-    "penalty",
-    "investigation",
-]
+def load_pdf(pdf_path: str | Path):
+    loader = PyPDFLoader(str(pdf_path))
+    return loader.load()
 
+def split_documents(documents: list):
+    splitter = RecursiveCharacterTextSplitter(
+        chunk_size=500,
+        chunk_overlap=50
+    )
 
-def get_sentiment(text: str):
+    return splitter.split_documents(documents)
 
-    text = text.lower()
+def create_embedding_model():
 
-    if any(word in text for word in POSITIVE_WORDS):
-        return "Bullish"
+    return HuggingFaceEmbeddings(
+        model_name="sentence-transformers/all-MiniLM-L6-v2"
+    )
 
-    if any(word in text for word in NEGATIVE_WORDS):
-        return "Bearish"
+def create_vector_database(chunks, embedding_model):
 
-    return "Neutral"
+    return Chroma.from_documents(
+        documents=chunks,
+        embedding=embedding_model,
+        persist_directory=str(CHROMA_DIR)
+    )
 
+def initialize_rag(pdf_path, k=3):
 
-def fetch_news(company: str, query: str, max_results: int = 5):
+    global retriever
+    global vector_db
+    global embedding_model
 
+    if retriever is not None:
+        return
+    
     try:
-
-        with DDGS() as ddgs:
-
-            results = list(
-                ddgs.text(
-                    query,
-                    max_results=max_results
-                )
-            )
-            
-
-        if not results:
-            return f"No news found for {company}."
-
-        formatted_news = []
-
-        for i, article in enumerate(results, start=1):
-
-            title = article.get("title", "No Title")
-
-            summary = article.get("body", "No Summary Available")
-
-            source = article.get("source", "DuckDuckGo")
-
-            url = article.get("href", "No URL")
-
-            sentiment = get_sentiment(title + " " + summary)
-
-            formatted_news.append(
-                f"""
-==============================
-
-News {i}
-
-Title:
-{title}
-
-Summary:
-{summary}
-
-Source:
-{source}
-
-URL:
-{url}
-
-Sentiment:
-{sentiment}
-
-==============================
-"""
-            )
-
-        return "\n".join(formatted_news)
-
+        documents = load_pdf(pdf_path)
     except Exception as e:
-        return f"Error fetching news: {str(e)}"
-
-
-@tool(args_schema=NewsInput)
-def company_news(company: str) -> str:
-    """
-    Fetch latest company news.
-    """
-    return fetch_news(
-        company,
-        f"{company} latest company news"
+       raise RuntimeError(
+        f"Failed to initialize RAG: {e}"
     )
 
+    chunks = split_documents(documents)
 
-@tool(args_schema=NewsInput)
-def breaking_news(company: str) -> str:
-    """
-    Fetch breaking news.
-    """
-    return fetch_news(
-        company,
-        f"{company} breaking news today"
+    embedding_model = create_embedding_model()
+
+    vector_db = create_vector_database(
+        chunks,
+        embedding_model
     )
 
-
-@tool(args_schema=NewsInput)
-def earnings_news(company: str) -> str:
-    """
-    Fetch earnings related news.
-    """
-    return fetch_news(
-        company,
-        f"{company} quarterly earnings OR financial results"
+    retriever = vector_db.as_retriever(
+    search_kwargs={"k": k}
     )
 
+    print("RAG initialized successfully.")
 
-@tool(args_schema=NewsInput)
-def ceo_news(company: str) -> str:
-    """
-    Fetch CEO related news.
-    """
-    return fetch_news(
-        company,
-        f"{company} CEO interview OR CEO announcement"
+def retrieve_context(query):
+
+    if retriever is None:
+        raise RuntimeError(
+            "RAG has not been initialized."
+        )
+
+    docs = retriever.invoke(query)
+
+    return "\n\n".join(
+        doc.page_content
+        for doc in docs
     )
 
+if __name__ == "__main__":
 
-@tool(args_schema=NewsInput)
-def government_orders(company: str) -> str:
-    """
-    Fetch government contracts/orders.
-    """
-    return fetch_news(
-        company,
-        f"{company} government contract OR government order"
+    PDF_PATH = (
+        BASE_DIR
+        / "data"
+        / "Module 2_Technical Analysis.pdf"
     )
 
+    initialize_rag(PDF_PATH)
 
-@tool(args_schema=NewsInput)
-def product_launches(company: str) -> str:
-    """
-    Fetch product launch news.
-    """
-    return fetch_news(
-        company,
-        f"{company} new product launch"
-    )
+    print(retrieve_context("RSI above 70"))
