@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, TypedDict
 
 # RAG Schemas
 class RetrievalRequest(BaseModel):
@@ -24,3 +24,26 @@ class RiskAuditorOutput(BaseModel):
     contradiction_reason: Optional[str] = Field(None, description="Explanation of contradictions found during audit")
     final_report: Optional[str] = Field(None, description="Final approved research/audit report")
     retry_count: int = Field(default=0, description="Counter tracking the retry attempts to avoid infinite loops")
+
+# Agent State
+class AgentState(TypedDict):
+
+    # Input
+    ticker: str
+
+    # Node 1
+    stock_data: Optional[dict]
+    technical_data: Optional[dict]
+    news: Optional[str]
+
+    # Node 2
+    rag_context: Optional[str]
+    recommendation: Optional[str]
+
+    # Node 3
+    needs_more_data: bool
+    contradiction_reason: Optional[str]
+    final_report: Optional[str]
+
+    # Loop control
+    retry_count: int

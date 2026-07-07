@@ -1,5 +1,5 @@
 from langgraph.graph import StateGraph, END
-from Agent_state import AgentState
+from schema2 import AgentState
 
 from schema2 import DataFetcherOutput, AnalystOutput, RiskAuditorOutput
 
