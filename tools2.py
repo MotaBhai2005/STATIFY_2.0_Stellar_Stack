@@ -37,7 +37,11 @@ def get_stock_price(ticker_symbol: str) -> dict:
             "day_low": info.get('dayLow'),
             "market_cap": info.get('marketCap'),
             "financial_currency": info.get('financialCurrency'),
-            "currency": info.get('currency')
+            "currency": info.get('currency'),
+            "open" : info.get('open'),
+            "previous_close" : info.get('previousClose'),   
+            "volume" : info.get('volume'),
+            "market_cap" : info.get('marketCap')
         }
         # Validate output schema
         validated_details = StockPriceOutput(**details)
@@ -95,7 +99,7 @@ def get_technical_indicators(ticker_symbol: str) -> dict:
     """
     try:
         ticker = yf.Ticker(ticker_symbol)
-        hist = ticker.history(period="3mo")
+        hist = ticker.history(period="6mo")
         
         if hist.empty:
             return {"error": "No historical data found"}
@@ -113,8 +117,8 @@ def get_technical_indicators(ticker_symbol: str) -> dict:
         delta = close.diff()
         gain = delta.clip(lower=0)
         loss = -delta.clip(upper=0)
-        avg_gain = gain.rolling.mean()
-        avg_loss = loss.rolling.mean()
+        avg_gain = gain.rolling(window=14).mean()
+        avg_loss = loss.rolling(window=14).mean()
         rs = avg_gain/avg_loss
         rsi = 100.0 - (100.0 / (1.0 + rs))
         
