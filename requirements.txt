@@ -10,12 +10,9 @@ huggingface-hub
 
 #Environment variable management
 python-dotenv
-
-
-
 yfinance
-duckduckgo-search
+ddgs
 pydantic
 torch
-
 requests
+
