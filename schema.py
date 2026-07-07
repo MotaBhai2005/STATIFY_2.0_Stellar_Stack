@@ -14,10 +14,11 @@ class StockPriceOutput(BaseModel):
     day_high: Optional[float] = Field(None, description="The highest price of the stock during the current trading day")
     day_low: Optional[float] = Field(None, description="The lowest price of the stock during the current trading day")
     market_cap: Optional[int] = Field(None, description="The market capitalization of the company")
-    financial_currency: Optional[str] = Field(None, description="The currency in which financial statements are reported")
     currency: Optional[str] = Field(None, description="The trading currency of the stock")
+    open_price: Optional[float] = Field(None, description="The opening price of the stock for the current trading day") 
+    previous_close: Optional[float] = Field(None, description="The previous closing price of the stock")
+    volume: Optional[int] = Field(None, description="The trading volume of the stock")
     error: Optional[str] = Field(None, description="Error message if the ticker is not found or invalid")
-
 
 class NewsInput(BaseModel):
     company: str = Field(description="Company name to search news for")

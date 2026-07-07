@@ -1,7 +1,7 @@
 import yfinance as yf
 from langchain_core.tools import tool
 from schema import StockPriceInput, StockPriceOutput, NewsInput
-from duckduckgo_search import DDGS
+from ddgs import DDGS
 
 @tool("get_stock_price", args_schema=StockPriceInput)
 def get_stock_price(ticker_symbol: str) -> dict:
@@ -36,12 +36,11 @@ def get_stock_price(ticker_symbol: str) -> dict:
             "day_high": info.get('dayHigh'),
             "day_low": info.get('dayLow'),
             "market_cap": info.get('marketCap'),
-            "financial_currency": info.get('financialCurrency'),
+            # "financial_currency": info.get('financialCurrency'),
             "currency": info.get('currency'),
-            "open" : info.get('open'),
+            "open_price" : info.get('open'),
             "previous_close" : info.get('previousClose'),   
-            "volume" : info.get('volume'),
-            "market_cap" : info.get('marketCap')
+            "volume" : info.get('volume')
         }
         # Validate output schema
         validated_details = StockPriceOutput(**details)
