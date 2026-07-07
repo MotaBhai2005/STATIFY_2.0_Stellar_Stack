@@ -203,3 +203,301 @@ python Week1.py
 # 📄 License
 
 This project was developed as part of the **STATIFY 2.0 Weekly GenAI Project** for educational purposes.   
+
+---
+
+# Week 2: Multi-Agent Financial Analyst & Risk Auditor
+
+Week 2 extends the Week 1 Financial Analyst Chatbot into a **stateful Multi-Agent Financial Analysis System** using **LangGraph**, **Retrieval-Augmented Generation (RAG)**, **Chroma Vector Database**, and **SQLite Persistent Memory**.
+
+The system performs live financial analysis by combining real-time market data, technical indicators, financial news, and technical-analysis knowledge retrieved from a local vector database.
+
+---
+
+# 🏗️ Architecture & Workflow
+
+The Week 2 system is built as a **three-node LangGraph workflow**.
+
+```text
+                         User Query
+                 (Example: Analyze RELIANCE.NS)
+                               │
+                               ▼
+                   ┌──────────────────────┐
+                   │  Node 1: Data Fetcher │
+                   └──────────────────────┘
+                               │
+             ┌─────────────────┼─────────────────┐
+             │                 │                 │
+             ▼                 ▼                 ▼
+      Stock Price        Technical Indicators   Latest News
+      (yfinance)               (RSI, SMA, EMA)   (DuckDuckGo)
+                               │
+                               ▼
+                ┌────────────────────────────┐
+                │ Node 2: Technical Analyst  │
+                └────────────────────────────┘
+                               │
+                 Interpret RSI using Local RAG
+                               │
+                               ▼
+                Chroma Vector Database Search
+                               │
+                               ▼
+                  BUY / HOLD / SELL Recommendation
+                               │
+                               ▼
+                ┌────────────────────────────┐
+                │ Node 3: Risk Auditor       │
+                └────────────────────────────┘
+                               │
+        Compare Technical Recommendation with Live News
+                               │
+               ┌───────────────┴───────────────┐
+               │                               │
+               ▼                               ▼
+      No Contradiction                 Contradiction Found
+               │                               │
+               ▼                               ▼
+ Save Report to SQLite               Fetch Additional News
+        Memory                               │
+               │                              │
+               ▼                              │
+         Final Report  ◄──────────────────────┘
+```
+
+---
+
+## Multi-Agent Workflow
+
+### Node 1 – Data Fetcher
+
+The Data Fetcher Agent collects all live market information.
+
+Responsibilities:
+
+- Fetch real-time stock price using **yfinance**
+- Calculate technical indicators:
+  - RSI (14)
+  - SMA (20)
+  - SMA (50)
+  - EMA (20)
+- Retrieve latest company news using DuckDuckGo Search
+- During retry, perform a deeper news search including:
+  - Breaking News
+  - Earnings News
+  - Government Orders
+
+---
+
+### Node 2 – Technical Analyst
+
+The Technical Analyst interprets the market indicators using Retrieval-Augmented Generation (RAG).
+
+Responsibilities:
+
+- Read calculated RSI value
+- Convert RSI into an appropriate RAG query
+- Retrieve relevant technical-analysis knowledge from ChromaDB
+- Generate a preliminary BUY / HOLD / SELL recommendation
+
+Example:
+
+```
+RSI = 76
+
+↓
+
+RAG Query:
+"RSI above 70"
+
+↓
+
+Retrieved Context:
+"RSI above 70 indicates an overbought condition..."
+
+↓
+
+Recommendation:
+SELL
+```
+
+---
+
+### Node 3 – Risk Auditor
+
+The Risk Auditor validates the recommendation against real-time market news.
+
+Responsibilities:
+
+- Compare technical recommendation with latest news
+- Detect bullish or bearish contradictions
+- Decide whether more information is required
+- Save approved reports into SQLite chat history
+
+---
+
+## Conditional Revert Loop
+
+The system implements a **Conditional Revert Edge** using LangGraph.
+
+If the Risk Auditor detects contradictory news, it sets:
+
+```
+needs_more_data = True
+```
+
+The workflow automatically returns to the **Data Fetcher** node, where additional financial news is collected before generating the final report.
+
+Example:
+
+```
+Technical Recommendation:
+SELL
+
+↓
+
+Breaking News:
+Company receives ₹50,000 Crore Government Contract
+
+↓
+
+Contradiction Detected
+
+↓
+
+Workflow returns to Data Fetcher
+
+↓
+
+Additional News Retrieved
+
+↓
+
+Risk Auditor performs final validation
+
+↓
+
+Final Report Generated
+```
+
+The retry count prevents infinite execution loops.
+
+---
+
+# 💾 Persistent Chat Memory (SQLite)
+
+Week 2 introduces persistent chat memory using SQLite.
+
+The application stores:
+
+- User query
+- Stock ticker
+- Technical indicators
+- Retrieved news
+- Recommendation
+- Final approved report
+- Timestamp
+
+When the same ticker is analyzed again, previous reports are automatically loaded and displayed.
+
+---
+
+
+# ⚙️ Setup & Execution
+
+## 1. Place the Technical Analysis PDF
+
+Download the Technical Analysis PDF from Zerodha Varsity.
+
+Store it inside the project directory:
+
+```text
+data/
+└── Module 2_Technical Analysis.pdf
+```
+
+---
+
+## 2. Install Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+---
+
+## 3. Configure Environment Variables
+
+Create a `.env` file and add your Hugging Face token.
+
+```env
+HF_TOKEN=your_huggingface_token
+```
+
+---
+
+## 4. Generate / Load Vector Embeddings
+
+When `Agent.py` runs for the first time:
+
+- The PDF is loaded.
+- Documents are split into chunks.
+- Hugging Face Embeddings are generated.
+- Chunks are stored in a local Chroma Vector Database.
+
+On subsequent executions, the existing Chroma database is automatically loaded without regenerating embeddings.
+
+---
+
+## 5. Run the Multi-Agent System
+
+```bash
+python Agent.py
+```
+
+Example:
+
+```text
+Enter query:
+
+Analyze RELIANCE.NS
+```
+
+The workflow executes:
+
+1. Data Fetcher
+2. Technical Analyst
+3. Risk Auditor
+4. Conditional Loop (if required)
+5. Final Financial Analysis Report
+
+---
+
+# 🚀 Week 2 Technologies Used
+
+- LangGraph
+- LangChain
+- Hugging Face Embeddings
+- Chroma Vector Database
+- Retrieval-Augmented Generation (RAG)
+- SQLite
+- yfinance
+- DuckDuckGo Search
+- Pydantic
+
+---
+
+# ✨ Week 2 Features
+
+- Multi-Agent Financial Analysis
+- LangGraph State-Based Workflow
+- Retrieval-Augmented Generation (RAG)
+- Chroma Vector Database
+- Technical Indicator Analysis
+- Risk Auditing
+- Conditional Revert Loop
+- Persistent SQLite Chat Memory
+- Real-Time Stock Price Retrieval
+- Live Financial News Analysis
+- Modular Agent Architecture

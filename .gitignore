@@ -15,6 +15,12 @@ __pycache__/
 .vscode/
 .idea/
 
+# SQLite Database
+chat_history.db
+
 # OS files
 .DS_Store
 Thumbs.db
+
+# Chroma Vector Database
+chroma_db/

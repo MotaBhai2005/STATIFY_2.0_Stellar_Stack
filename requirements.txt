@@ -1,18 +1,37 @@
-#Langchain core
+
+# LangChain Ecosystem
 langchain
 langchain-core
 langchain-community
-
-#Hugging face Integration
+langchain-text-splitters
 langchain-huggingface
+langchain-chroma
+langgraph
+
+# Vector Database
+chromadb
+
+# Embedding Models
+sentence-transformers
 transformers
 huggingface-hub
-
-#Environment variable management
-python-dotenv
-yfinance
-ddgs
-pydantic
 torch
-requests
 
+# Financial Data
+yfinance
+
+# Web Search
+ddgs
+
+# PDF Processing
+pypdf
+
+# Data Validation
+pydantic
+
+# Environment Variables
+python-dotenv
+
+
+# HTTP Requests
+requests
