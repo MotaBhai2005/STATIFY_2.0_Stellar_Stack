@@ -1,6 +1,9 @@
 # ==========================================================
 # IMPORTS
 # ==========================================================
+from dotenv import load_dotenv
+load_dotenv()
+
 from langgraph.graph import StateGraph, END
 from schema2 import (
     AgentState,
@@ -334,21 +337,54 @@ if __name__ == "__main__":
             print("\n Thank you for using FinSight AI")
             break
 
-        words = query.split()
+        COMPANY_TO_TICKER = {
+            "apple": "AAPL",
+            "microsoft": "MSFT",
+            "tesla": "TSLA",
+            "google": "GOOGL",
+            "alphabet": "GOOGL",
+            "amazon": "AMZN",
+            "meta": "META",
+            "facebook": "META",
+            "nvidia": "NVDA",
+            "netflix": "NFLX",
+            "intel": "INTC",
+            "amd": "AMD",
+            "oracle": "ORCL",
+            "ibm": "IBM",
+            "tcs": "TCS.NS",
+            "infosys": "INFY.NS",
+            "reliance": "RELIANCE.NS",
+            "hdfc": "HDFCBANK.NS",
+            "sbi": "SBIN.NS",
+            "wipro": "WIPRO.NS",
+        }
+
+        words = [w.strip("?,.:;!\"'()") for w in query.split()]
 
         ticker = None
-
+        # 1. Check company name mapping
         for word in words:
-            if "." in word:
-                ticker = word
+            if word.lower() in COMPANY_TO_TICKER:
+                ticker = COMPANY_TO_TICKER[word.lower()]
                 break
 
-        if ticker is None:
-            print("Invalid query.")
-            continue
+        # 2. Check for ticker with a dot (e.g., RELIANCE.NS) or uppercase ticker (e.g., AAPL)
+        if not ticker:
+            for word in words:
+                if "." in word:
+                    ticker = word
+                    break
+                elif word.isupper() and word.isalpha() and 1 <= len(word) <= 5:
+                    ticker = word
+                    break
+
+        # 3. Fallback: if query is a single word, try using it directly
+        if not ticker and len(words) == 1:
+            ticker = words[0]
 
         if not ticker:
-            print("Ticker cannot be empty.")
+            print("Invalid query. Could not identify a ticker symbol or company name.")
             continue
 
         if not query:
