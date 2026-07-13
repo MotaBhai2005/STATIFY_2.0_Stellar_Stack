@@ -35,3 +35,10 @@ python-dotenv
 
 # HTTP Requests
 requests
+
+# Week 3 Microservices & MCP
+fastapi
+uvicorn
+langchain-mcp-adapters
+mcp
+sse-starlette

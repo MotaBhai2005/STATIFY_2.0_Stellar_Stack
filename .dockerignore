@@ -1,0 +1,14 @@
+.venv
+venv
+__pycache__
+.git
+.gitignore
+.env
+chat_history.db
+chroma_db/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.coverage
+htmlcov/
