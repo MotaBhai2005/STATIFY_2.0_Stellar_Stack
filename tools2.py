@@ -1,4 +1,7 @@
 # import commands 
+from dotenv import load_dotenv
+load_dotenv()
+
 from langchain_core.tools import tool
 from ddgs import DDGS
 from schema2 import NewsInput, RetrievalRequest, RetrievalResponse
