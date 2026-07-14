@@ -501,3 +501,201 @@ The workflow executes:
 - Real-Time Stock Price Retrieval
 - Live Financial News Analysis
 - Modular Agent Architecture
+
+# Week 3: Production Microservices, MCP Client Integration, & Containerization
+
+## Microservices & MCP Layout
+
+This project follows a microservices architecture by separating the API service and the Vector Database (RAG) service into independent Docker containers.
+
+### Architecture
+
+```
+                    +---------------------------+
+                    |       FastAPI API         |
+                    |      (main.py)            |
+                    |                           |
+                    |  MultiServerMCPClient     |
+                    +------------+--------------+
+                                 |
+                      MCP (Streamable HTTP)
+                                 |
+                  Docker Internal Network
+                                 |
+                    +------------v--------------+
+                    |      MCP Server           |
+                    |    (mcp_server.py)        |
+                    |                           |
+                    |  Chroma Vector Database   |
+                    |  HuggingFace Embeddings   |
+                    +---------------------------+
+```
+
+### Workflow
+
+1. The client sends a POST request to the FastAPI endpoint.
+2. The API retrieves:
+   - Company News
+   - Breaking News
+   - Earnings News
+   - Stock Price
+   - Technical Indicators
+   - Position Sizing
+3. The RSI value is converted into a semantic query.
+4. The `MultiServerMCPClient` connects to the Vector Database container over the Docker network.
+5. The MCP Server searches the Chroma Vector Database using Retrieval-Augmented Generation (RAG).
+6. The retrieved technical analysis context is returned to the API.
+7. FastAPI combines all results into a structured JSON response.
+
+---
+
+# API Reference
+
+## Endpoint
+
+```
+POST /api/v1/analyze
+```
+
+### Sample Request
+
+```bash
+curl -X POST "http://localhost:8000/api/v1/analyze" \
+-H "Content-Type: application/json" \
+-d '{
+  "ticker": "RELIANCE.NS",
+  "position_size": 1000000
+}'
+```
+
+### Example Response
+
+```json
+{
+  "ticker": "RELIANCE.NS",
+  "status": "success",
+  "message": "Analysis completed successfully.",
+  "result": {
+    "stock": {
+      "symbol": "RELIANCE.NS",
+      "company_name": "Reliance Industries Ltd",
+      "current_price": 1492.50,
+      "day_high": 1504.30,
+      "day_low": 1483.20,
+      "volume": 5321412
+    },
+    "technical_analysis": {
+      "sma_20": 1478.12,
+      "ema_20": 1481.67,
+      "rsi_14": 63.45
+    },
+    "position_sizing": {
+      "capital_at_risk": 10000,
+      "stop_loss_price": 1417.87,
+      "max_shares_to_buy": 133,
+      "risk_status": "Approved"
+    },
+    "news": "...latest company news...",
+    "mcp_context": "Retrieved technical analysis context from ChromaDB."
+  }
+}
+```
+
+---
+
+# Production Setup
+
+## 1. Clone the Repository
+
+```bash
+git clone <repository-url>
+cd STATIFY_2.0_Stellar_Stack
+```
+
+---
+
+## 2. Create Environment Variables
+
+Create a `.env` file in the project root and configure the required environment variables.
+
+Example:
+
+```env
+HF_TOKEN=your_huggingface_token
+```
+
+---
+
+## 3. Build the Docker Containers
+
+```bash
+docker-compose up --build
+```
+
+This command will:
+
+- Build the FastAPI service
+- Build the MCP Vector Database service
+- Install all project dependencies
+- Initialize the Chroma Vector Database
+- Start the MCP Server
+- Start the FastAPI application
+
+---
+
+## 4. Verify Running Services
+
+FastAPI API
+
+```
+http://localhost:8000/docs
+```
+
+MCP Vector Database Service
+
+```
+http://localhost:8001
+```
+
+---
+
+## 5. Test the API
+
+Open the Swagger UI:
+
+```
+http://localhost:8000/docs
+```
+
+Navigate to:
+
+```
+POST /api/v1/analyze
+```
+
+Use the following sample request:
+
+```json
+{
+  "ticker": "RELIANCE.NS",
+  "position_size": 1000000
+}
+```
+
+Click **Execute** to receive the complete financial analysis generated through the integrated microservices architecture.
+
+---
+
+## Technologies Used
+
+- FastAPI
+- LangGraph
+- LangChain
+- Model Context Protocol (MCP)
+- ChromaDB
+- HuggingFace Embeddings
+- Docker
+- Docker Compose
+- SQLite
+- yFinance
+- Python

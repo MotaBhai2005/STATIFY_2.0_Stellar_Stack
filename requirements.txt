@@ -39,3 +39,7 @@ requests
 
 fastapi
 uvicorn
+langchain-mcp-adapters
+mcp
+sse-starlette
+pywin32
