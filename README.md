@@ -1,3 +1,4 @@
+***###Week-1***
 # 📈 STATIFY 2.0 – Financial Analyst Chatbot
 
 An LLM-powered Financial Analyst Chatbot built using **LangChain**, **Hugging Face**, **DuckDuckGo Search**, and **yfinance**. The chatbot provides real-time stock prices and the latest company news through an interactive conversational interface.
